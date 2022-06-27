@@ -1,0 +1,3 @@
+# List out the required python packages for any of these blueprints to work here.
+# Example:
+# pandas==1.3.5
