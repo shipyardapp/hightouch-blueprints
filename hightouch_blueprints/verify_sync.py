@@ -2,7 +2,10 @@ import argparse
 import sys
 import requests
 import shipyard_utils as shipyard
-import errors
+try:
+    import errors
+except:
+    from . import errors
 
 
 def get_args():
@@ -37,7 +40,7 @@ def get_sync_status(sync_id, sync_run_id, access_token):
         sync_run_json = sync_run_response.json()
         # check if successful, if not return error message
         if sync_status_code == requests.codes.ok:
-            return sync_run_json
+            return sync_run_json['data'][0]
             
         elif sync_status_code == 400: # Bad request
             print("Sync status request failed due to Bad Request Error.")
@@ -58,6 +61,7 @@ def get_sync_status(sync_id, sync_run_id, access_token):
     except Exception as e:
         print(f"Sync status for Sync {sync_id}:{sync_run_id} failed due to: {e}")
         sys.exit(errors.EXIT_CODE_UNKNOWN_ERROR)
+
 
 
 def handle_sync_run_data(sync_run_data):
