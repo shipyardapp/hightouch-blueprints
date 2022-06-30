@@ -2,18 +2,22 @@ import argparse
 import sys
 import requests
 import shipyard_utils as shipyard
-import errors
+try:
+    import errors
+except BaseException:
+	from . import errors
 
 
 def get_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--access-token', dest='access_token', required=True)
     parser.add_argument('--sync-id', dest='sync_id', required=True)
+    parser.add_argument('--full-resync', dest='full_resync', required=False)
     args = parser.parse_args()
     return args
 
 
-def execute_sync(sync_id, access_token):
+def execute_sync(sync_id, access_token, full_resync=False):
     """
     Executes/starts a Hightouch Sync
     see: https://hightouch.io/docs/api-reference/#operation/TriggerRun
@@ -24,20 +28,23 @@ def execute_sync(sync_id, access_token):
         'authorization': f"Bearer {access_token}",
         'Content-Type': 'application/json'
     }
-    payload = {
-        "fullResync": "false"
-    }
+    payload = {}
+    if full_resync == True:
+    	payload["fullResync"] = "true"
+    else:
+    	payload["fullResync"] = "false"
+
     try:
         sync_trigger_response = requests.post(sync_api,
                                               json=payload,
                                               headers=api_headers)
         
         sync_status_code = sync_trigger_response.status_code
-        sync_trigger_json = sync_trigger_response.json()
         # check if successful, if not return error message
         if sync_status_code == requests.codes.ok:
-            return sync_trigger_json
-            
+        	print(f"Sync trigger for {sync_id} successful")
+            return sync_trigger_response.json()
+
         elif sync_status_code == 400: # Bad request
             print("Sync request failed due to Bad Request Error.")
             sys.exit(errors.EXIT_CODE_BAD_REQUEST)
@@ -45,10 +52,15 @@ def execute_sync(sync_id, access_token):
         elif sync_status_code == 401: # Incorrect credentials 
             print("Incorrect credentials, check your access token")
             sys.exit(errors.EXIT_CODE_INVALID_CREDENTIALS)
-            
+
+        elif sync_status_code == 404: # invalid sync id 
+            print(f"Sync request Failed. Invalid Sync ID: {sync_id}")
+            sys.exit(errors.EXIT_CODE_SYNC_INVALID_ID)
+
         elif sync_status_code == 422: # Invalid content
+        	sync_trigger_json = sync_trigger_response.json()
             print(f"Validation failed: {sync_trigger_json['details']}")
-            sys.exit(errors.EXIT_CODE_INVALID_CREDENTIALS)
+            sys.exit(errors.EXIT_CODE_BAD_REQUEST)
         
         else:
             print("Unknown Error when sending request")
@@ -57,8 +69,6 @@ def execute_sync(sync_id, access_token):
     except Exception as e:
         print(f"Sync trigger request failed due to: {e}")
         sys.exit(errors.EXIT_CODE_UNKNOWN_ERROR)
-
-    
 
 
 def main():
