@@ -37,9 +37,10 @@ def get_sync_status(sync_id, sync_run_id, access_token):
                                               headers=api_headers)
         
         sync_status_code = sync_run_response.status_code
-        sync_run_json = sync_run_response.json()
+        
         # check if successful, if not return error message
         if sync_status_code == requests.codes.ok:
+            sync_run_json = sync_run_response.json()
             return sync_run_json['data'][0]
             
         elif sync_status_code == 400: # Bad request
@@ -51,6 +52,7 @@ def get_sync_status(sync_id, sync_run_id, access_token):
             sys.exit(errors.EXIT_CODE_INVALID_CREDENTIALS)
             
         elif sync_status_code == 422: # Invalid status query
+            sync_run_json = sync_run_response.json()
             print(f"Check status Validation failed: {sync_run_json['details']}")
             sys.exit(errors.EXIT_CODE_BAD_REQUEST)
         
@@ -85,12 +87,12 @@ def handle_sync_run_data(sync_run_data):
             f"Sync run {run_id} still Running. ",
             f"Current records processed: {sync_run_data['records_processed']}"
         )
-        status_code = errors.EXIT_CODE_STATUS_RUNNING
+        status_code = errors.EXIT_CODE_FINAL_STATUS_RUNNING
     
     elif status == "failed":
         error_info = sync_run_data['error']
         print(f"Sync run {run_id} failed. {error_info}")
-        status_code = errors.EXIT_CODE_STATUS_FAILED
+        status_code = errors.EXIT_CODE_FINAL_STATUS_FAILED
         
     else:
         print("Unknown Sync status: {status}")
