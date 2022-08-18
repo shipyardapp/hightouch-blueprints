@@ -43,7 +43,7 @@ def execute_sync(sync_id, access_token, full_resync=False):
         # check if successful, if not return error message
         if sync_status_code == requests.codes.ok:
             print(
-                f"Sync trigger for {sync_id} successful. Kicked off sync run {sync_trigger_response.json()['id']}")
+                f"Sync trigger for {sync_id} successful. Kicked off {'full resync - ' if full_resync else ''}sync run {sync_trigger_response.json()['id']}")
             return sync_trigger_response.json()
 
         elif sync_status_code == 400:  # Bad request
@@ -76,9 +76,10 @@ def main():
     args = get_args()
     access_token = args.access_token
     sync_id = args.sync_id
+    full_resync = shipyard.args.convert_to_boolean(args.full_resync)
 
     # execute trigger sync
-    trigger_sync = execute_sync(sync_id, access_token)
+    trigger_sync = execute_sync(sync_id, access_token, full_resync)
     sync_run_id = trigger_sync['id']
 
     # create artifacts folder to save run id
