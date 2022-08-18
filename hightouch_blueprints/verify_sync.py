@@ -102,7 +102,7 @@ def determine_run_status(sync_run_data):
         status_code = errors.EXIT_CODE_FINAL_STATUS_FAILED
 
     else:
-        print("Unknown Sync status: {status}")
+        print(f"Unknown Sync status: {status}")
         status_code = errors.EXIT_CODE_UNKNOWN_ERROR
 
     return status_code
